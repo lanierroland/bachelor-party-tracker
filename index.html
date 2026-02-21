@@ -8,29 +8,34 @@
         :root { --win: #00e676; --loss: #ff5252; --bg: #0a0a0a; --card: #181818; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* HEADER - Button now lives inside here on the left */
+        /* DYNAMIC HEADER SETUP */
         .header { 
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px 0; 
-            background: #1a1a1a; 
-            border-bottom: 3px solid var(--win); 
+            padding: 25px 0; 
+            background: #1a1a1a; /* Default */
+            border-bottom: 3px solid rgba(255,255,255,0.1); 
             flex-shrink: 0;
             position: relative;
+            transition: background 0.5s ease, border-color 0.5s ease;
         }
 
-        .header-content { text-align: center; }
-        .label { color: var(--win); text-transform: uppercase; font-size: 0.85rem; font-weight: 800; letter-spacing: 3px; margin-bottom: 5px; }
-        .group-total { font-size: 3rem; font-weight: 900; margin: 0; }
+        /* State Classes for the Header */
+        .header.winning { background: #004d26; border-color: var(--win); }
+        .header.losing { background: #4d0000; border-color: var(--loss); }
 
-        /* LOG NEW BET BUTTON - TOP LEFT */
+        .header-content { text-align: center; }
+        .label { color: rgba(255,255,255,0.7); text-transform: uppercase; font-size: 0.75rem; font-weight: 800; letter-spacing: 2px; margin-bottom: 5px; }
+        .group-total { font-size: 3rem; font-weight: 900; margin: 0; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); }
+
+        /* LOG NEW BET BUTTON */
         .log-btn { 
             position: absolute;
             left: 15px;
             top: 50%;
             transform: translateY(-50%);
-            background: var(--win); 
+            background: white; 
             color: black; 
             padding: 12px 20px; 
             border-radius: 8px; 
@@ -38,18 +43,15 @@
             text-decoration: none; 
             font-size: 0.8rem;
             text-transform: uppercase;
-            box-shadow: 0 4px 15px rgba(0, 230, 118, 0.2);
-            transition: background 0.2s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
             white-space: nowrap;
         }
-        .log-btn:active { background: #00c853; }
 
-        /* SPLIT CONTENT */
+        /* MAIN CONTENT */
         .main-content { display: flex; flex: 1; overflow: hidden; }
         @media (max-width: 768px) { 
             .main-content { flex-direction: column; } 
             .column { width: 100% !important; height: 50% !important; } 
-            /* On small phones, move button to a fixed corner if header is tight */
             .log-btn { padding: 10px 15px; font-size: 0.7rem; left: 10px; }
             .group-total { font-size: 2.2rem; }
         }
@@ -60,7 +62,7 @@
         .section-title { 
             background: #333; padding: 12px; border-radius: 6px; margin-bottom: 15px; 
             font-size: 1.1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;
-            border-left: 6px solid var(--win); display: block;
+            border-left: 6px solid #555; display: block;
         }
 
         /* CARDS */
@@ -83,14 +85,14 @@
         .time-date { color: var(--win); font-size: 0.85rem; font-weight: 800; }
         .activity { font-size: 1.2rem; font-weight: 800; margin: 5px 0; }
         
-        #error-msg { color: var(--loss); text-align: center; padding: 5px; font-size: 0.8rem; font-weight: bold; display: none; background: #222; }
+        #error-msg { color: white; text-align: center; padding: 5px; font-size: 0.8rem; font-weight: bold; display: none; background: var(--loss); }
     </style>
 </head>
 <body>
 
 <div id="error-msg">⚠️ CONNECTION ERROR</div>
 
-<div class="header">
+<div class="header" id="mainHeader">
     <a href="https://docs.google.com/forms/d/e/1FAIpQLSfSuaBDzhCPst9NEBvVA1HN1DESFEDsV2FNv3kykM77ONGTHg/viewform" class="log-btn" target="_blank">💸 LOG BET</a>
     <div class="header-content">
         <div class="label">Lanier Bachelor Party Group Winnings</div>
@@ -102,7 +104,7 @@
     <div class="column">
         <div class="section-title">🏆 Leaderboard</div>
         <div id="leaderboard" class="scroll-area">
-            <div style="text-align:center; padding:20px; color:#555;">Loading...</div>
+            <div style="text-align:center; padding:20px; color:#555;">Syncing Vegas Data...</div>
         </div>
     </div>
 
@@ -121,10 +123,24 @@
             const data = await response.json();
             document.getElementById('error-msg').style.display = 'none';
 
+            // 1. Update Group Total & Header Color
             const gt = document.getElementById('groupTotal');
-            gt.innerText = (data.groupTotal >= 0 ? '+$' : '-$') + Math.abs(data.groupTotal).toLocaleString();
-            gt.style.color = data.groupTotal >= 0 ? 'var(--win)' : 'var(--loss)';
+            const header = document.getElementById('mainHeader');
+            const isWinning = data.groupTotal >= 0;
 
+            gt.innerText = (isWinning ? '+$' : '-$') + Math.abs(data.groupTotal).toLocaleString();
+            gt.style.color = 'white'; // White text looks better on the dark red/green BG
+
+            // Toggle Header Colors
+            if (isWinning) {
+                header.classList.add('winning');
+                header.classList.remove('losing');
+            } else {
+                header.classList.add('losing');
+                header.classList.remove('winning');
+            }
+
+            // 2. Update Leaderboard
             const lb = document.getElementById('leaderboard');
             if (data.leaderboard) {
                 lb.innerHTML = data.leaderboard.map((p, index) => {
@@ -143,6 +159,7 @@
                 }).join('');
             }
 
+            // 3. Update Itinerary
             const itin = document.getElementById('itinerary');
             if (data.itinerary) {
                 itin.innerHTML = data.itinerary.map(i => `
