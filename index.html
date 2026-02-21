@@ -8,7 +8,7 @@
         :root { --win: #00e676; --loss: #ff5252; --bg: #0a0a0a; --card: #181818; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* HEADER - High Visibility */
+        /* HEADER */
         .header { text-align: center; padding: 25px 0; background: #1a1a1a; border-bottom: 3px solid var(--win); flex-shrink: 0; }
         .label { color: var(--win); text-transform: uppercase; font-size: 0.85rem; font-weight: 800; letter-spacing: 3px; margin-bottom: 5px; }
         .group-total { font-size: 3.5rem; font-weight: 900; margin: 0; }
@@ -19,7 +19,7 @@
         .column { width: 50%; display: flex; flex-direction: column; padding: 15px; box-sizing: border-box; }
         .scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; }
 
-        /* TITLES - Standout Style */
+        /* TITLES */
         .section-title { 
             background: #333; padding: 12px; border-radius: 6px; margin-bottom: 15px; 
             font-size: 1.1rem; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;
@@ -27,9 +27,22 @@
         }
 
         /* CARDS */
-        .card { background: var(--card); border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; }
+        .card { background: var(--card); border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #222; position: relative; }
+        .name-box { display: flex; align-items: baseline; gap: 10px; }
+        .rank { font-size: 0.75rem; font-weight: 800; color: #666; text-transform: uppercase; min-width: 30px; }
         .name { font-size: 1rem; font-weight: 700; }
         .amt { font-family: 'Courier New', monospace; font-size: 1.3rem; font-weight: 900; }
+
+        /* SHAME STYLING FOR 27TH PLACE */
+        .dead-ass-last { 
+            border: 2px solid var(--loss) !important; 
+            animation: pulse-red 2s infinite; 
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(255, 82, 82, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 82, 82, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 82, 82, 0); }
+        }
 
         /* ITINERARY */
         .itin-box { background: #111; border-radius: 10px; padding: 15px; margin-bottom: 12px; border: 1px solid #222; }
@@ -68,7 +81,6 @@
 <a href="https://docs.google.com/forms/d/e/1FAIpQLSfSuaBDzhCPst9NEBvVA1HN1DESFEDsV2FNv3kykM77ONGTHg/viewform" class="fab" target="_blank">💸 LOG NEW BET</a>
 
 <script>
-    // PASTE YOUR SCRIPT URL HERE
     const scriptUrl = "https://script.google.com/macros/s/AKfycbwLHoudS8oo3yA35AH_aFzgCmaVDjOjy5WTe0HInrFJUoOqSA4jxkx5ykVrZZaaR_uq/exec";
 
     async function fetchData() {
@@ -79,25 +91,41 @@
             
             document.getElementById('error-msg').style.display = 'none';
 
-            // Update Total
+            // 1. Update Group Total
             const gt = document.getElementById('groupTotal');
             gt.innerText = (data.groupTotal >= 0 ? '+$' : '-$') + Math.abs(data.groupTotal).toLocaleString();
             gt.style.color = data.groupTotal >= 0 ? 'var(--win)' : 'var(--loss)';
 
-            // Update Leaderboard
+            // 2. Update Leaderboard with Rankings
             const lb = document.getElementById('leaderboard');
             if (data.leaderboard && data.leaderboard.length > 0) {
-                lb.innerHTML = data.leaderboard.map(p => `
-                    <div class="card">
-                        <div class="name">${p.name}</div>
-                        <div class="amt" style="color:${p.total >= 0 ? 'var(--win)' : 'var(--loss)'}">
-                            ${p.total >= 0 ? '+' : '-'}$${Math.abs(p.total).toLocaleString()}
+                lb.innerHTML = data.leaderboard.map((p, index) => {
+                    const rankNum = index + 1;
+                    let rankLabel = rankNum + (["st", "nd", "rd"][((rankNum + 90) % 100 - 10) % 10 - 1] || "th");
+                    let specialClass = "";
+
+                    // Special Rankings
+                    if (rankNum === 1) rankLabel = "1st 🏆";
+                    if (rankNum === 27) {
+                        rankLabel = "💀 DEAD ASS LAST";
+                        specialClass = "dead-ass-last";
+                    }
+
+                    return `
+                        <div class="card ${specialClass}">
+                            <div class="name-box">
+                                <span class="rank">${rankLabel}</span>
+                                <span class="name">${p.name}</span>
+                            </div>
+                            <div class="amt" style="color:${p.total >= 0 ? 'var(--win)' : 'var(--loss)'}">
+                                ${p.total >= 0 ? '+' : '-'}$${Math.abs(p.total).toLocaleString()}
+                            </div>
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
 
-            // Update Itinerary
+            // 3. Update Itinerary
             const itin = document.getElementById('itinerary');
             if (data.itinerary && data.itinerary.length > 0) {
                 itin.innerHTML = data.itinerary.map(i => `
@@ -115,7 +143,7 @@
     }
 
     fetchData();
-    setInterval(fetchData, 60000);
+    setInterval(fetchData, 60000); // Auto-refresh every 60 seconds
 </script>
 </body>
 </html>
