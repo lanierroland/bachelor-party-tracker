@@ -5,157 +5,139 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lanier's Bachelor Tracker</title>
     <style>
-        :root { --win: #00e676; --loss: #ff5252; --bg: #0f0f0f; --card: #1e1e1e; }
+        :root { 
+            --win: #00e676; 
+            --loss: #ff5252; 
+            --bg: #0a0a0a; 
+            --card: #181818; 
+            --accent: #222;
+        }
         
         body { 
-            font-family: 'Segoe UI', sans-serif; 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
             background: var(--bg); 
             color: white; 
             margin: 0; 
             display: flex;
             flex-direction: column;
-            height: 100vh; /* Full screen height */
-            overflow: hidden; /* Prevents the whole page from scrolling */
+            height: 100vh;
+            overflow: hidden;
         }
         
+        /* HEADER SECTION */
         .header { 
             text-align: center; 
-            padding: 20px 0; 
-            background: #1a1a1a;
-            border-bottom: 1px solid #333;
+            padding: 30px 0; 
+            background: linear-gradient(180deg, #1a1a1a 0%, var(--bg) 100%);
+            border-bottom: 2px solid #333;
             flex-shrink: 0;
         }
         
-        .group-total { font-size: 2.5rem; font-weight: 900; margin: 5px 0; }
-        .label { color: #888; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 2px; }
-
-        /* The Split Container */
-        .main-content {
-            display: flex;
-            flex: 1; /* Fills remaining space */
-            overflow: hidden;
+        .label { 
+            color: var(--win); 
+            text-transform: uppercase; 
+            font-size: 0.8rem; 
+            font-weight: 800;
+            letter-spacing: 3px; 
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(0, 230, 118, 0.3);
         }
 
-        /* Responsive: Stack on mobile, side-by-side on desktop */
+        .group-total { 
+            font-size: 3.5rem; 
+            font-weight: 900; 
+            margin: 0; 
+            letter-spacing: -2px;
+            text-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* MAIN LAYOUT */
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            background: rgba(255,255,255,0.02);
+        }
+
         @media (max-width: 768px) {
             .main-content { flex-direction: column; }
             .column { width: 100% !important; height: 50% !important; }
+            .column:first-child { border-bottom: 2px solid #222; }
         }
 
         .column {
             width: 50%;
             display: flex;
             flex-direction: column;
-            padding: 15px;
+            padding: 20px;
             box-sizing: border-box;
+        }
+
+        /* SECTION TITLES */
+        .section-title { 
+            background: var(--accent);
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px; 
+            font-size: 1rem; 
+            font-weight: 900; 
+            text-transform: uppercase; 
+            letter-spacing: 2px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-left: 5px solid var(--win);
         }
 
         .scroll-area {
             flex: 1;
-            overflow-y: auto; /* This makes each half scrollable independently */
-            padding-right: 5px;
+            overflow-y: auto;
+            padding-right: 10px;
         }
 
-        .section-title { 
-            margin: 10px 0 15px; 
-            font-size: 0.9rem; 
-            font-weight: bold; 
-            text-transform: uppercase; 
-            color: #666; 
-            border-bottom: 1px solid #333; 
-        }
-
-        /* Leaderboard Cards */
-        .card { background: var(--card); border-radius: 8px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #2a2a2a; }
-        .name { font-size: 0.9rem; font-weight: 600; }
-        .amt { font-family: monospace; font-size: 1.1rem; font-weight: bold; }
-
-        /* Itinerary Cards */
-        .itin-box { background: #151515; border-radius: 8px; padding: 12px; margin-bottom: 10px; border-left: 3px solid var(--win); }
-        .time-date { color: var(--win); font-size: 0.75rem; font-weight: bold; }
-        .activity { font-size: 1rem; font-weight: 600; margin: 3px 0; }
-        .location { font-size: 0.75rem; color: #888; }
-
-        /* Floating Button */
-        .fab { 
-            position: fixed; 
-            bottom: 20px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            background: var(--win); 
-            color: black; 
-            padding: 15px 40px; 
-            border-radius: 50px; 
-            font-weight: 900; 
-            text-decoration: none; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            z-index: 1000;
+        /* LEADERBOARD CARDS */
+        .card { 
+            background: var(--card); 
+            border-radius: 12px; 
+            padding: 18px; 
+            margin-bottom: 12px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border: 1px solid #2a2a2a;
+            transition: transform 0.2s;
         }
         
-        /* Custom Scrollbar for a cleaner Vegas look */
-        .scroll-area::-webkit-scrollbar { width: 4px; }
-        .scroll-area::-webkit-scrollbar-track { background: #0f0f0f; }
-        .scroll-area::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-    </style>
-</head>
-<body>
+        .card:first-child {
+            border: 1px solid var(--win);
+            box-shadow: 0 0 15px rgba(0, 230, 118, 0.1);
+        }
 
-<div class="header">
-    <div class="label">Lanier Bachelor Party Group Winnings</div>
-    <div id="groupTotal" class="group-total">$0</div>
-</div>
+        .name { font-size: 1.1rem; font-weight: 700; color: #ddd; }
+        .amt { font-family: 'Courier New', monospace; font-size: 1.5rem; font-weight: 900; }
 
-<div class="main-content">
-    <div class="column">
-        <div class="section-title">Leaderboard</div>
-        <div id="leaderboard" class="scroll-area"></div>
-    </div>
+        /* ITINERARY BOXES */
+        .itin-box { 
+            background: #111; 
+            border-radius: 12px; 
+            padding: 20px; 
+            margin-bottom: 15px; 
+            border: 1px solid #222;
+        }
+        
+        .time-date { 
+            color: var(--win); 
+            font-size: 0.9rem; 
+            font-weight: 800; 
+            text-transform: uppercase;
+        }
+        
+        .activity { font-size: 1.3rem; font-weight: 800; margin: 8px 0; color: #fff; }
+        .location { font-size: 0.9rem; color: #777; font-weight: 500; }
 
-    <div class="column" style="border-left: 1px solid #222;">
-        <div class="section-title">Schedule</div>
-        <div id="itinerary" class="scroll-area"></div>
-    </div>
-</div>
-
-<a href="https://docs.google.com/forms/d/e/1FAIpQLSfSuaBDzhCPst9NEBvVA1HN1DESFEDsV2FNv3kykM77ONGTHg/viewform" class="fab" target="_blank">💸 LOG NEW BET</a>
-
-<script>
-    const scriptUrl = "https://script.google.com/macros/s/AKfycbwLHoudS8oo3yA35AH_aFzgCmaVDjOjy5WTe0HInrFJUoOqSA4jxkx5ykVrZZaaR_uq/exec";
-
-    async function fetchData() {
-        try {
-            const response = await fetch(scriptUrl);
-            const data = await response.json();
-
-            // Total
-            const gt = document.getElementById('groupTotal');
-            gt.innerText = (data.groupTotal >= 0 ? '+$' : '-$') + Math.abs(data.groupTotal).toLocaleString();
-            gt.style.color = data.groupTotal >= 0 ? 'var(--win)' : 'var(--loss)';
-
-            // Leaderboard
-            document.getElementById('leaderboard').innerHTML = data.leaderboard.map(p => `
-                <div class="card">
-                    <div class="name">${p.name}</div>
-                    <div class="amt" style="color:${p.total >= 0 ? 'var(--win)' : 'var(--loss)'}">
-                        ${p.total >= 0 ? '+' : '-'}$${Math.abs(p.total).toLocaleString()}
-                    </div>
-                </div>
-            `).join('');
-
-            // Itinerary
-            document.getElementById('itinerary').innerHTML = data.itinerary.map(i => `
-                <div class="itin-box">
-                    <div class="time-date">${i.date} | ${i.time}</div>
-                    <div class="activity">${i.activity}</div>
-                    <div class="location">📍 ${i.loc}</div>
-                </div>
-            `).join('');
-
-        } catch (e) { console.error(e); }
-    }
-
-    fetchData();
-    setInterval(fetchData, 60000);
-</script>
-</body>
-</html>
+        /* FLOATING BUTTON */
+        .fab { 
+            position: fixed; 
+            bottom: 25px; 
+            left:
