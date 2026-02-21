@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bachelor Stakes Dashboard</title>
+    <style>
+        :root { --win: #00e676; --loss: #ff5252; --bg: #0f0f0f; --card: #1e1e1e; }
+        body { 
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+            background: var(--bg); 
+            color: white; 
+            margin: 0; 
+            padding: 20px; 
+            padding-bottom: 120px; /* Space for the floating button */
+        }
+        
+        .header { text-align: center; padding: 40px 0; background: linear-gradient(to bottom, #1a1a1a, var(--bg)); }
+        .group-total { font-size: 3.5rem; font-weight: 900; margin: 10px 0; letter-spacing: -1px; }
+        .label { color: #888; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 3px; }
+
+        .section-title { margin: 40px 0 15px; font-size: 1.2rem; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: #555; border-bottom: 1px solid #333; padding-bottom: 5px; }
+
+        /* Leaderboard Cards */
+        .card { background: var(--card); border-radius: 12px; padding: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #2a2a2a; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .name { font-weight: 600; font-size: 1.1rem; }
+        .amt { font-family: 'Courier New', monospace; font-size: 1.4rem; font-weight: bold; }
+
+        /* Itinerary Cards */
+        .itin-box { background: #151515; border-radius: 12px; padding: 15px; margin-bottom: 15px; border-left: 4px solid #444; }
+        .time { color: var(--win); font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; }
+        .activity { font-size: 1.1rem; font-weight: 600; }
+        .location { font-size: 0.85rem; color: #888; margin-top: 4px; }
+
+        /* Floating Action Button (FAB) */
+        .fab { 
+            position: fixed; 
+            bottom: 30px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            background: var(--win); 
+            color: black; 
+            padding: 20px 50px; 
+            border-radius: 50px; 
+            font-weight: 900; 
+            text-decoration: none; 
+            box-shadow: 0 10px 30px rgba(0, 230, 118, 0.4); 
+            z-index: 1000; 
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .fab:active { transform: translateX(-50%) scale(0.95); }
+
+        #loading { text-align: center; margin-top: 50px; color: var(--win); font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <div class="label">Group Net Status</div>
+    <div id="groupTotal" class="group-total">...</div>
+</div>
+
+<div class="section-title">The Leaderboard</div>
+<div id="leaderboard"><div id="loading">Syncing with Vegas...</div></div>
+
+<div class="section-title">Schedule</div>
+<div id="itinerary"></div>
+
+<a href="https://docs.google.com/forms/d/e/1FAIpQLSfSuaBDzhCPst9NEBvVA1HN1DESFEDsV2FNv3kykM77ONGTHg/viewform" class="fab" target="_blank">💸 LOG NEW BET</a>
+
+<script>
+    // Your Apps Script URL
+    const scriptUrl = "https://script.google.com/macros/s/AKfycbwLHoudS8oo3yA35AH_aFzgCmaVDjOjy5WTe0HInrFJUoOqSA4jxkx5ykVrZZaaR_uq/exec";
+
+    async function fetchData() {
+        try {
+            const response = await fetch(scriptUrl);
+            const data = await response.json();
+
+            // 1. Update Group Total
+            const gt = document.getElementById('groupTotal');
+            const totalVal = data.groupTotal || 0;
+            gt.innerText = (totalVal >= 0 ? '+$' : '-$') + Math.abs(totalVal).toLocaleString();
+            gt.style.color = totalVal >= 0 ? 'var(--win)' : 'var(--loss)';
+
+            // 2. Update Leaderboard
+            const lbContainer = document.getElementById('leaderboard');
+            if (data.leaderboard && data.leaderboard.length > 0) {
+                lbContainer.innerHTML = data.leaderboard.map(p => `
+                    <div class="card">
+                        <div class="name">${p.name}</div>
+                        <div class="amt" style="color:${p.total >= 0 ? 'var(--win)' : 'var(--loss)'}">
+                            ${p.total >= 0 ? '+' : '-'}$${Math.abs(p.total).toLocaleString()}
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                lbContainer.innerHTML = "<div style='text-align:center; color:#555;'>No bets logged yet.</div>";
+            }
+
+            // 3. Update Itinerary
+            const itinContainer = document.getElementById('itinerary');
+            if (data.itinerary && data.itinerary.length > 0) {
+                itinContainer.innerHTML = data.itinerary.map(i => `
+                    <div class="itin-box">
+                        <div class="time">${i.date} | ${i.time}</div>
+                        <div class="activity">${i.activity}</div>
+                        <div class="location">📍 ${i.loc}</div>
+                    </div>
+                `).join('');
+            } else {
+                itinContainer.innerHTML = "<div style='text-align:center; color:#555;'>No events scheduled.</div>";
+            }
+
+        } catch (e) {
+            document.getElementById('loading').innerHTML = "Error connecting to the house.";
+            console.error(e);
+        }
+    }
+
+    fetchData();
+    // Auto-refresh every 60 seconds
+    setInterval(fetchData, 60000);
+</script>
+</body>
+</html>
